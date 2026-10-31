@@ -1,34 +1,35 @@
 {
   "name": "youtube-studio-mcp",
-  "version": "0.1.0",
-  "description": "Manage YouTube metadata, thumbnails, and analytics from Codex via MCP.",
+  "version": "0.2.0",
+  "description": "YouTube MCP server: bulk video uploads, metadata, playlists, captions, comments, live streams and analytics.",
   "author": {
-    "name": "Abhishek Pandey",
-    "url": "https://github.com/i1s-abhishek"
+    "name": "AI Shopping Feeds",
+    "url": "https://github.com/AI-Shopping-Feeds"
   },
-  "homepage": "https://github.com/i1s-abhishek/youtube-studio-mcp",
+  "homepage": "https://github.com/AI-Shopping-Feeds/youtube-studio-mcp",
   "license": "MIT",
   "keywords": [
     "youtube",
-    "seo",
-    "analytics",
-    "thumbnail",
+    "youtube-mcp",
+    "video-upload",
+    "youtube-analytics",
+    "youtube-seo",
     "mcp"
   ],
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "YouTube Studio MCP",
-    "shortDescription": "Control YouTube metadata and analytics from Codex",
-    "longDescription": "Connect your YouTube channel with Google OAuth so Codex can inspect channel performance, update titles and descriptions, manage tags, and upload thumbnails through a local MCP server.",
-    "developerName": "Abhishek Pandey",
+    "shortDescription": "Upload and manage YouTube videos from Codex",
+    "longDescription": "Connect your YouTube channel with Google OAuth so Codex can bulk-upload videos, edit titles, descriptions and tags, manage playlists, captions, comments and live streams, and read YouTube Analytics through a local MCP server.",
+    "developerName": "AI Shopping Feeds",
     "category": "Productivity",
-    "websiteURL": "https://github.com/i1s-abhishek/youtube-studio-mcp",
+    "websiteURL": "https://github.com/AI-Shopping-Feeds/youtube-studio-mcp",
     "privacyPolicyURL": "https://policies.google.com/privacy",
     "termsOfServiceURL": "https://www.youtube.com/t/terms",
     "defaultPrompt": [
-      "Show my top recent videos and their metadata",
-      "Update this video's title, description, and tags",
-      "Summarize my channel analytics for the last 28 days"
+      "Upload every video in ~/Videos/ads as unlisted",
+      "Show my top videos by views for the last 28 days",
+      "Rewrite this video's title, description and tags for search"
     ],
     "brandColor": "#FF0033",
     "screenshots": []

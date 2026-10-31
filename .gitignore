@@ -21,3 +21,6 @@ secrets/*
 *.log
 tmp/
 temp/
+
+# Audit log
+logs/
