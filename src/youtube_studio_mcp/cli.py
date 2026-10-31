@@ -14,6 +14,7 @@ from pathlib import Path
 import click
 
 from . import __version__
+from ._logging import get_logger
 from .auth import OPTIONAL_SCOPES, SCOPES
 from .config import Config, load_config
 
@@ -37,7 +38,7 @@ def _load(ctx: click.Context) -> Config:
     "--transport",
     type=click.Choice(["stdio", "sse", "streamable-http"]),
     default=None,
-    help="Override YOUTUBE_TRANSPORT.",
+    help="Override YOUTUBE_TRANSPORT. sse is deprecated; prefer streamable-http.",
 )
 @click.option("--host", default=None, help="Bind host for HTTP transports.")
 @click.option("--port", type=int, default=None, help="Bind port for HTTP transports.")
@@ -67,6 +68,11 @@ def run(ctx: click.Context) -> None:
     config.host = ctx.obj.get("host") or config.host
     config.port = ctx.obj.get("port") or config.port
     mcp = build_server(config=config)
+    if config.transport == "sse":
+        get_logger("cli").warning(
+            "The sse transport (HTTP+SSE) is deprecated by the MCP specification and will be "
+            "removed in a future release. Use --transport streamable-http instead."
+        )
     if config.transport == "stdio":
         mcp.run("stdio")
     else:
