@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.3.0 (unreleased)
+
+Brings the server in line with current MCP best practice (MCP spec 2026-07-28, Python SDK 2.3).
+
+### Added
+
+- **Tool filtering:** `YOUTUBE_TOOL_GROUPS` (comma-separated: `channels`, `videos`, `uploads`,
+  `playlists`, `comments`, `captions`, `search`, `live`, `analytics`, `raw`; empty means all)
+  and `YOUTUBE_READ_ONLY=true` (read-only tools only). The auth, server, audit and dry-run
+  tools are always registered. An unknown group stops the server at startup and lists the
+  valid groups. `youtube_describe_server` shows both settings.
+- **Tool titles:** every tool has a human-readable `title`.
+- **Upload progress:** `youtube_upload_video` sends MCP progress notifications per chunk
+  (bytes sent / total) and `youtube_upload_videos` per video.
+- The server reports its version in `serverInfo`.
+- In-memory end-to-end tests through `mcp.Client`.
+
+### Changed
+
+- **Annotations:** `youtube_set_dry_run` had none; it and the auth/audit tools are now
+  annotated as closed-world local tools. `youtube_transition_live_broadcast` and
+  `youtube_close_live_chat_poll` are now destructive (ending a broadcast or closing a poll
+  can't be undone).
+- `youtube_upload_video` and `youtube_upload_videos` are async and run the upload in a
+  worker thread. Results, dry-run, the audit log and `YOUTUBE_UPLOAD_DIR` are unchanged.
+- Configuration errors (such as an unknown tool group) are shown as a one-line CLI error.
+
+### Deprecated
+
+- The `sse` transport (HTTP+SSE), which the MCP specification deprecates. It still works
+  but logs a warning; use `streamable-http`. The default bind stays `127.0.0.1`.
+
 ## 0.2.0 (unreleased): AI Shopping Feeds fork
 
 Rebuilt on the official MCP Python SDK 2.3 (`MCPServer`) as an installable package

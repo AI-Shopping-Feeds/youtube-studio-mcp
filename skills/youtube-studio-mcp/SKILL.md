@@ -58,6 +58,13 @@ Ask what the person already has. They need:
 - **Optional `YOUTUBE_UPLOAD_DIR`:** the folder that local video files may be
   uploaded from. Suggest it.
 - **Optional `YOUTUBE_DRY_RUN=true`:** to try it without changing the channel.
+- **Optional `YOUTUBE_READ_ONLY=true`:** registers only read-only tools. Suggest it
+  when the person only wants reporting or research.
+- **Optional `YOUTUBE_TOOL_GROUPS`:** a comma-separated list of tool groups to
+  register (default all): `channels`, `videos`, `uploads`, `playlists`, `comments`,
+  `captions`, `search`, `live`, `analytics`, `raw`. Fewer tools means less context and
+  better tool choice, e.g. `videos,uploads,playlists` for an upload workflow. The auth,
+  server, audit and dry-run tools are always registered.
 
 The client JSON and token are secrets. Don't repeat their contents in chat, and
 don't put them inside a project or git repository. Use absolute paths in the config.
@@ -139,6 +146,12 @@ All tools start with `youtube_`. The full list is in
   `transition_live_broadcast`, live chat tools.
 - Anything else: `call_api`.
 
+If a tool you expect is missing, the server may be limited by `YOUTUBE_TOOL_GROUPS`
+or `YOUTUBE_READ_ONLY`: `youtube_describe_server` shows both. Tell the person which
+setting to change rather than working around it with `call_api`.
+
+Uploads report progress while they run, so a long upload isn't stuck.
+
 ### How to work
 
 1. **Look before you write.** Read the current state (`get_video`,
@@ -196,6 +209,10 @@ code; `download_caption` to fetch an existing track.
 
 ## Troubleshooting
 
+- **A tool is missing:** check `tool_groups` and `read_only` in
+  `youtube_describe_server`, then change `YOUTUBE_TOOL_GROUPS` / `YOUTUBE_READ_ONLY`.
+- **The server won't start with "Unknown YOUTUBE_TOOL_GROUPS value":** fix the
+  group name; the error lists the valid ones.
 - **`youtube_auth_status` shows no token:** run the `auth-init` command in step 3.
 - **`invalid_grant`:** the token expired or was revoked (Testing-mode apps expire
   after 7 days). Re-run `auth-init`.
