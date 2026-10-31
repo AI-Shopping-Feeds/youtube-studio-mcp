@@ -222,3 +222,7 @@ Licensed under the [MIT License](LICENSE). Based on [i1s-abhishek/youtube-studio
 
 - Upgrading from upstream: tool names, `YOUTUBE_CLIENT_SECRETS`, `YOUTUBE_TOKEN_FILE` and old token files keep working. Start the server with the `youtube-studio-mcp` command instead of `python3 scripts/server.py`.
 - Content-owner (YouTube CMS) accounts can pass `onBehalfOfContentOwner` through `extra_params` or `youtube_call_api`.
+
+---
+
+Try out [AI Shopping Feeds](https://aishoppingfeeds.com/), our shopping feed management tool (including Google Shopping feeds).
