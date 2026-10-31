@@ -1,22 +1,72 @@
-"""Build the FastMCP server with every youtube_* tool registered."""
+"""Build the MCP server with every youtube_* tool registered."""
 
 from __future__ import annotations
 
+import functools
+import inspect
 from pathlib import Path
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
+import httpx
+from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
 
 from . import __version__
 from ._logging import configure_default, get_logger
 from .audit import AuditLog
 from .auth import SCOPES, OAuthUserAuth
-from .client import YouTubeClient
+from .client import YouTubeAPIError, YouTubeClient
 from .config import Config, load_config
 from .tools import MODULES
 from .tools._common import READ
 
 logger = get_logger("server")
+
+# Errors whose message helps the agent fix the call (bad arguments, a refusal
+# such as a missing confirm=true, quota, permissions or config problems).
+_EXPECTED_ERRORS = (
+    ValueError,
+    RuntimeError,
+    PermissionError,
+    FileNotFoundError,
+    YouTubeAPIError,
+    httpx.HTTPError,
+)
+
+
+def _as_tool_error(fn):
+    """Re-raises expected errors as ToolError so MCP SDK 2 shows their message.
+
+    SDK 2 hides the text of any other exception from the client.
+    """
+    if inspect.iscoroutinefunction(fn):
+
+        @functools.wraps(fn)
+        async def async_wrapper(*args, **kwargs):
+            try:
+                return await fn(*args, **kwargs)
+            except _EXPECTED_ERRORS as exc:
+                raise ToolError(str(exc)) from exc
+
+        return async_wrapper
+
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except _EXPECTED_ERRORS as exc:
+            raise ToolError(str(exc)) from exc
+
+    return wrapper
+
+
+class YouTubeMCPServer(MCPServer):
+    """MCPServer whose tools report expected errors to the client."""
+
+    def tool(self, *args: Any, **kwargs: Any):
+        register = super().tool(*args, **kwargs)
+        return lambda fn: register(_as_tool_error(fn))
+
 
 INSTRUCTIONS = """\
 YouTube Studio MCP: manage a YouTube channel through the YouTube Data API v3,
@@ -32,7 +82,7 @@ YouTube Analytics API v2 and YouTube Reporting API v1.
 
 def build_server(
     config: Config | None = None, env_file: Path | None = None, auth: Any | None = None
-) -> FastMCP:
+) -> MCPServer:
     configure_default()
     if config is None:
         config = load_config(env_file=env_file)
@@ -48,7 +98,7 @@ def build_server(
         config.dry_run,
     )
 
-    mcp = FastMCP("youtube-studio-mcp", instructions=INSTRUCTIONS)
+    mcp = YouTubeMCPServer("youtube-studio-mcp", instructions=INSTRUCTIONS)
 
     @mcp.tool(annotations=READ)
     def youtube_auth_status() -> dict[str, Any]:

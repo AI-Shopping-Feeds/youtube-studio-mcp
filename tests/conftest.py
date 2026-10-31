@@ -51,7 +51,6 @@ def call(server):
 
     def _call(name: str, **args: Any) -> Any:
         result = asyncio.run(server.call_tool(name, args))
-        content = result[0] if isinstance(result, tuple) else result
-        return json.loads(content[0].text)
+        return json.loads(result.content[0].text)
 
     return _call

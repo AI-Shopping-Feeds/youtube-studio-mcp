@@ -2,8 +2,14 @@
 
 ## 0.2.0 (unreleased): AI Shopping Feeds fork
 
-Rebuilt on the official MCP Python SDK (FastMCP) as an installable package
+Rebuilt on the official MCP Python SDK 2.3 (`MCPServer`) as an installable package
 (`youtube-studio-mcp-server` on PyPI, `youtube-studio-mcp` command).
+
+### Changed
+
+- **MCP SDK 2:** requires `mcp>=2.3.0,<3`. Expected tool errors (refusals, bad
+  arguments, YouTube API and quota errors, config problems) are re-raised as
+  `ToolError` so clients still see their message; SDK 2 hides other exception text.
 
 ### Added
 

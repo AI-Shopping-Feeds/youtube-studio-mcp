@@ -59,10 +59,10 @@ def run(ctx: click.Context) -> None:
     config.host = ctx.obj.get("host") or config.host
     config.port = ctx.obj.get("port") or config.port
     mcp = build_server(config=config)
-    if config.transport != "stdio":
-        mcp.settings.host = config.host
-        mcp.settings.port = config.port
-    mcp.run(config.transport)  # type: ignore[arg-type]
+    if config.transport == "stdio":
+        mcp.run("stdio")
+    else:
+        mcp.run(config.transport, host=config.host, port=config.port)  # type: ignore[arg-type]
 
 
 @cli.command("auth-init")

@@ -30,9 +30,9 @@ def test_tools_register_with_unique_names(server):
 
 def test_read_only_and_destructive_annotations(server):
     tools = {t.name: t for t in asyncio.run(server.list_tools())}
-    assert tools["youtube_list_videos"].annotations.readOnlyHint is True
-    assert tools["youtube_delete_video"].annotations.destructiveHint is True
-    assert tools["youtube_upload_video"].annotations.readOnlyHint is False
+    assert tools["youtube_list_videos"].annotations.read_only_hint is True
+    assert tools["youtube_delete_video"].annotations.destructive_hint is True
+    assert tools["youtube_upload_video"].annotations.read_only_hint is False
 
 
 def test_clean_params():
