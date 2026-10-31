@@ -1,0 +1,67 @@
+from __future__ import annotations
+
+import json
+import threading
+import time
+import uuid
+from pathlib import Path
+from typing import Any
+
+
+class AuditLog:
+    """Append-only JSONL log of every write call, including dry runs and failures."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self._lock = threading.Lock()
+
+    def record(
+        self,
+        *,
+        op: str,
+        method: str,
+        url: str,
+        params: Any | None = None,
+        request_body: Any | None = None,
+        media: Any | None = None,
+        response_status: int | None = None,
+        response_body: Any | None = None,
+        dry_run: bool = False,
+        error: str | None = None,
+    ) -> str:
+        audit_id = uuid.uuid4().hex
+        entry = {
+            "audit_id": audit_id,
+            "ts": time.time(),
+            "op": op,
+            "method": method,
+            "url": url,
+            "params": params,
+            "request_body": request_body,
+            "media": media,
+            "response_status": response_status,
+            "response_body": response_body,
+            "dry_run": dry_run,
+            "error": error,
+        }
+        line = json.dumps(entry, ensure_ascii=False, default=str)
+        with self._lock, self.path.open("a", encoding="utf-8") as f:
+            f.write(line + "\n")
+        return audit_id
+
+    def find(self, audit_id: str) -> dict[str, Any] | None:
+        if not self.path.exists():
+            return None
+        with self.path.open("r", encoding="utf-8") as f:
+            for line in f:
+                entry = json.loads(line)
+                if entry.get("audit_id") == audit_id:
+                    return entry
+        return None
+
+    def tail(self, limit: int = 20) -> list[dict[str, Any]]:
+        if not self.path.exists():
+            return []
+        with self.path.open("r", encoding="utf-8") as f:
+            lines = f.readlines()[-limit:]
+        return [json.loads(line) for line in lines]

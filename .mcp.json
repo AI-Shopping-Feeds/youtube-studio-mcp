@@ -1,11 +1,8 @@
 {
   "mcpServers": {
     "youtube-studio": {
-      "command": "python3",
-      "args": [
-        "./scripts/server.py"
-      ],
-      "cwd": ".",
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/AI-Shopping-Feeds/youtube-studio-mcp.git", "youtube-studio-mcp"],
       "env": {
         "YOUTUBE_CLIENT_SECRETS": "./secrets/client_secret.json",
         "YOUTUBE_TOKEN_FILE": "./secrets/token.json"

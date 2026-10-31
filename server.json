@@ -1,0 +1,51 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.AI-Shopping-Feeds/youtube-studio-mcp",
+  "description": "YouTube MCP: bulk video uploads, metadata, playlists, captions, live and analytics.",
+  "repository": {
+    "url": "https://github.com/AI-Shopping-Feeds/youtube-studio-mcp",
+    "source": "github"
+  },
+  "version": "0.2.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "youtube-studio-mcp-server",
+      "version": "0.2.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "YOUTUBE_CLIENT_SECRETS",
+          "description": "Absolute path to your Google OAuth Desktop client JSON.",
+          "isRequired": true,
+          "format": "filepath",
+          "isSecret": true
+        },
+        {
+          "name": "YOUTUBE_TOKEN_FILE",
+          "description": "Absolute path to the token JSON written by `youtube-studio-mcp auth-init`.",
+          "isRequired": true,
+          "format": "filepath",
+          "isSecret": true
+        },
+        {
+          "name": "YOUTUBE_UPLOAD_DIR",
+          "description": "Optional folder that local uploads must come from.",
+          "isRequired": false,
+          "format": "filepath",
+          "isSecret": false
+        },
+        {
+          "name": "YOUTUBE_DRY_RUN",
+          "description": "When 'true', writes and uploads are logged but not sent.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "default": "false"
+        }
+      ]
+    }
+  ]
+}

@@ -4,9 +4,9 @@ What changed?
 
 ## Testing
 
-- [ ] Ran `python3 -m py_compile scripts/auth.py scripts/server.py`
-- [ ] Tested relevant MCP tool manually, if applicable
-- [ ] Confirmed no credentials or tokens are committed
+- [ ] `ruff check`, `ruff format --check`, `mypy` and `pytest` pass
+- [ ] Tested the changed tools against a real channel, if applicable
+- [ ] No credentials or tokens committed
 
 ## Notes
 
