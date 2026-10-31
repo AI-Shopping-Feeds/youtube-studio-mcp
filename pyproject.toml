@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "youtube-studio-mcp-server"
-version = "0.2.0"
+version = "0.3.0"
 description = "YouTube MCP server: upload videos (bulk, resumable), manage metadata, playlists, captions, comments, live streams, analytics and reports from Claude, ChatGPT, Cursor and other AI agents. YouTube Data API v3, Analytics API v2 and Reporting API v1."
 readme = "README.md"
 requires-python = ">=3.10"

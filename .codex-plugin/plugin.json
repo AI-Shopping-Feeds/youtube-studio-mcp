@@ -1,6 +1,6 @@
 {
   "name": "youtube-studio-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "YouTube MCP server: bulk video uploads, metadata, playlists, captions, comments, live streams and analytics.",
   "author": {
     "name": "AI Shopping Feeds",

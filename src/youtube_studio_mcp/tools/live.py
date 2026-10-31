@@ -11,7 +11,7 @@ from ._common import DESTRUCTIVE, READ, WRITE, parts_of, require_confirm
 def register(mcp, client: YouTubeClient) -> None:
     # ---- broadcasts ----
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List live broadcasts", annotations=READ)
     def youtube_list_live_broadcasts(
         broadcast_status: str | None = "all",
         id: list[str] | None = None,
@@ -33,7 +33,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Schedule a live broadcast", annotations=WRITE)
     def youtube_create_live_broadcast(
         title: str,
         scheduled_start_time: str,
@@ -71,14 +71,14 @@ def register(mcp, client: YouTubeClient) -> None:
             op="liveBroadcasts.insert",
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update a live broadcast", annotations=WRITE)
     def youtube_update_live_broadcast(broadcast: dict[str, Any]) -> dict[str, Any]:
         """Update a live broadcast resource. Include `id` and the full parts you change."""
         return client.request(
             "PUT", "liveBroadcasts", params={"part": parts_of(broadcast)}, json_body=broadcast
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Bind a broadcast to a stream", annotations=WRITE)
     def youtube_bind_live_broadcast(
         broadcast_id: str, stream_id: str | None = None
     ) -> dict[str, Any]:
@@ -89,11 +89,12 @@ def register(mcp, client: YouTubeClient) -> None:
             params={"id": broadcast_id, "part": "id,contentDetails", "streamId": stream_id},
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Change a broadcast's state", annotations=DESTRUCTIVE)
     def youtube_transition_live_broadcast(
         broadcast_id: str, broadcast_status: str
     ) -> dict[str, Any]:
-        """Change a broadcast's state. broadcast_status: testing | live | complete."""
+        """Change a broadcast's state. broadcast_status: testing | live | complete.
+        "complete" ends the broadcast for good; it can't be restarted."""
         return client.request(
             "POST",
             "liveBroadcasts/transition",
@@ -104,7 +105,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Insert a live ad break", annotations=WRITE)
     def youtube_insert_cuepoint(
         broadcast_id: str, duration_secs: int = 30, insertion_offset_time_ms: int | None = None
     ) -> dict[str, Any]:
@@ -116,7 +117,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "POST", "liveBroadcasts/cuepoint", params={"id": broadcast_id}, json_body=body
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a live broadcast", annotations=DESTRUCTIVE)
     def youtube_delete_live_broadcast(broadcast_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete a broadcast. Requires confirm=true."""
         require_confirm(confirm, "Deleting a live broadcast")
@@ -124,7 +125,7 @@ def register(mcp, client: YouTubeClient) -> None:
 
     # ---- streams ----
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List live streams", annotations=READ)
     def youtube_list_live_streams(
         mine: bool | None = True,
         id: list[str] | None = None,
@@ -144,7 +145,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Create a live stream", annotations=WRITE)
     def youtube_create_live_stream(
         title: str,
         resolution: str = "variable",
@@ -166,14 +167,14 @@ def register(mcp, client: YouTubeClient) -> None:
             "POST", "liveStreams", params={"part": "snippet,cdn,contentDetails"}, json_body=body
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update a live stream", annotations=WRITE)
     def youtube_update_live_stream(stream: dict[str, Any]) -> dict[str, Any]:
         """Update a live stream resource. Include `id` and the full parts you change."""
         return client.request(
             "PUT", "liveStreams", params={"part": parts_of(stream)}, json_body=stream
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a live stream", annotations=DESTRUCTIVE)
     def youtube_delete_live_stream(stream_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete a live stream. Requires confirm=true."""
         require_confirm(confirm, "Deleting a live stream")
@@ -181,7 +182,7 @@ def register(mcp, client: YouTubeClient) -> None:
 
     # ---- live chat ----
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Read live chat messages", annotations=READ)
     def youtube_list_live_chat_messages(
         live_chat_id: str,
         page_token: str | None = None,
@@ -202,7 +203,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Post a live chat message", annotations=WRITE)
     def youtube_post_live_chat_message(live_chat_id: str, text: str) -> dict[str, Any]:
         """Post a text message to a live chat."""
         body = {
@@ -216,20 +217,21 @@ def register(mcp, client: YouTubeClient) -> None:
             "POST", "liveChat/messages", params={"part": "snippet"}, json_body=body
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a live chat message", annotations=DESTRUCTIVE)
     def youtube_delete_live_chat_message(message_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete a live chat message. Requires confirm=true."""
         require_confirm(confirm, "Deleting a chat message")
         return client.request("DELETE", "liveChat/messages", params={"id": message_id})
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Close a live chat poll", annotations=DESTRUCTIVE)
     def youtube_close_live_chat_poll(poll_id: str) -> dict[str, Any]:
-        """Close a live chat poll (liveChatMessages.transition, status=closed)."""
+        """Close a live chat poll (liveChatMessages.transition, status=closed). A closed poll
+        can't be reopened."""
         return client.request(
             "POST", "liveChat/messages/transition", params={"id": poll_id, "status": "closed"}
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List live chat moderators", annotations=READ)
     def youtube_list_live_chat_moderators(
         live_chat_id: str, max_results: int = 50, page_token: str | None = None
     ) -> dict[str, Any]:
@@ -245,7 +247,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Add a live chat moderator", annotations=WRITE)
     def youtube_add_live_chat_moderator(live_chat_id: str, channel_id: str) -> dict[str, Any]:
         """Make a channel a moderator of a live chat."""
         body = {
@@ -255,7 +257,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "POST", "liveChat/moderators", params={"part": "snippet"}, json_body=body
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Remove a live chat moderator", annotations=DESTRUCTIVE)
     def youtube_remove_live_chat_moderator(
         moderator_id: str, confirm: bool = False
     ) -> dict[str, Any]:
@@ -263,7 +265,7 @@ def register(mcp, client: YouTubeClient) -> None:
         require_confirm(confirm, "Removing a moderator")
         return client.request("DELETE", "liveChat/moderators", params={"id": moderator_id})
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Ban a live chat user", annotations=WRITE)
     def youtube_ban_live_chat_user(
         live_chat_id: str, channel_id: str, ban_duration_seconds: int | None = None
     ) -> dict[str, Any]:
@@ -279,7 +281,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "POST", "liveChat/bans", params={"part": "snippet"}, json_body={"snippet": snippet}
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Unban a live chat user", annotations=WRITE)
     def youtube_unban_live_chat_user(ban_id: str) -> dict[str, Any]:
         """Lift a live chat ban (use the ban ID returned by youtube_ban_live_chat_user)."""
         return client.request("DELETE", "liveChat/bans", params={"id": ban_id})

@@ -10,7 +10,7 @@ from ._common import DESTRUCTIVE, READ, WRITE, parts_of, require_confirm
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List playlists", annotations=READ)
     def youtube_list_playlists(
         mine: bool | None = True,
         channel_id: str | None = None,
@@ -33,7 +33,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Create a playlist", annotations=WRITE)
     def youtube_create_playlist(
         title: str,
         description: str | None = None,
@@ -60,7 +60,7 @@ def register(mcp, client: YouTubeClient) -> None:
             op="playlists.insert",
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update a playlist", annotations=WRITE)
     def youtube_update_playlist(playlist: dict[str, Any]) -> dict[str, Any]:
         """Update a playlist resource. Include `id` and the full parts you change
         (e.g. snippet with title, status with privacyStatus)."""
@@ -72,13 +72,13 @@ def register(mcp, client: YouTubeClient) -> None:
             op="playlists.update",
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a playlist", annotations=DESTRUCTIVE)
     def youtube_delete_playlist(playlist_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete a playlist (the videos stay). Requires confirm=true."""
         require_confirm(confirm, "Deleting a playlist")
         return client.request("DELETE", "playlists", params={"id": playlist_id})
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List playlist items", annotations=READ)
     def youtube_list_playlist_items(
         playlist_id: str,
         max_results: int = 50,
@@ -97,7 +97,7 @@ def register(mcp, client: YouTubeClient) -> None:
             max_pages=max_pages,
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Add videos to a playlist", annotations=WRITE)
     def youtube_add_to_playlist(
         playlist_id: str, video_ids: list[str], position: int | None = None
     ) -> dict[str, Any]:
@@ -122,7 +122,7 @@ def register(mcp, client: YouTubeClient) -> None:
             )
         return {"added": len(results), "items": results}
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update a playlist item", annotations=WRITE)
     def youtube_update_playlist_item(playlist_item: dict[str, Any]) -> dict[str, Any]:
         """Update a playlist item (e.g. move it: snippet.position, or contentDetails.note).
         Include `id` and the full snippet (playlistId and resourceId are required)."""
@@ -133,7 +133,7 @@ def register(mcp, client: YouTubeClient) -> None:
             json_body=playlist_item,
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Remove a playlist item", annotations=DESTRUCTIVE)
     def youtube_remove_playlist_item(
         playlist_item_id: str, confirm: bool = False
     ) -> dict[str, Any]:
@@ -141,14 +141,14 @@ def register(mcp, client: YouTubeClient) -> None:
         require_confirm(confirm, "Removing a playlist item")
         return client.request("DELETE", "playlistItems", params={"id": playlist_item_id})
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List playlist images", annotations=READ)
     def youtube_list_playlist_images(playlist_id: str) -> dict[str, Any]:
         """List a playlist's custom cover images."""
         return client.request(
             "GET", "playlistImages", params={"part": "snippet", "parent": playlist_id}
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Set a playlist image", annotations=WRITE)
     def youtube_set_playlist_image(
         playlist_id: str, image: str, playlist_image_id: str | None = None
     ) -> dict[str, Any]:
@@ -167,7 +167,7 @@ def register(mcp, client: YouTubeClient) -> None:
                 metadata=body,
             )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a playlist image", annotations=DESTRUCTIVE)
     def youtube_delete_playlist_image(
         playlist_image_id: str, confirm: bool = False
     ) -> dict[str, Any]:

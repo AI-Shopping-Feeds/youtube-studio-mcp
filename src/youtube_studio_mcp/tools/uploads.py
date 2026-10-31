@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import functools
 from typing import Any
 
-from ..client import YouTubeAPIError, YouTubeClient
+import anyio.to_thread
+from mcp.server.mcpserver import Context
+
+from ..client import UploadProgress, YouTubeAPIError, YouTubeClient
 from ..media import guess_mime
-from ._common import READ, WRITE
+from ._common import READ, WRITE, ProgressReporter
 from .videos import OWNER_PARTS
 
 UPLOAD_NOTES = (
@@ -50,7 +54,11 @@ def build_video_body(spec: dict[str, Any]) -> dict[str, Any]:
     return body
 
 
-def upload_one(client: YouTubeClient, spec: dict[str, Any]) -> dict[str, Any]:
+def upload_one(
+    client: YouTubeClient, spec: dict[str, Any], on_progress: UploadProgress | None = None
+) -> dict[str, Any]:
+    """Upload one video (plus optional thumbnail and playlists). Blocking: tools run it
+    in a worker thread. on_progress(sent, total) follows the video file's bytes."""
     if not spec.get("source"):
         raise ValueError("Each video needs a `source` (local path or http(s) URL).")
     if not spec.get("title"):
@@ -66,6 +74,7 @@ def upload_one(client: YouTubeClient, spec: dict[str, Any]) -> dict[str, Any]:
             params={"part": ",".join(body), "notifySubscribers": spec.get("notify_subscribers")},
             metadata=body,
             op="videos.insert",
+            on_progress=on_progress,
         )
     result: dict[str, Any] = {"source": spec["source"], "video": video}
     video_id = video.get("id")
@@ -101,8 +110,9 @@ def upload_one(client: YouTubeClient, spec: dict[str, Any]) -> dict[str, Any]:
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=WRITE)
-    def youtube_upload_video(
+    @mcp.tool(title="Upload a video", annotations=WRITE)
+    async def youtube_upload_video(
+        ctx: Context,
         source: str,
         title: str,
         description: str | None = None,
@@ -131,15 +141,23 @@ def register(mcp, client: YouTubeClient) -> None:
         contains_synthetic_media: set true for realistic AI-generated or altered content.
         thumbnail: optional image path/URL set after upload. playlist_ids: playlists to add it to.
         The video is processed after upload; poll youtube_get_upload_status for the result.
+        Sends progress notifications (bytes sent / total) while the file uploads.
         """
-        spec = {k: v for k, v in locals().items() if k != "client"}
-        result = upload_one(client, spec)
+        spec = {k: v for k, v in locals().items() if k not in ("client", "ctx")}
+        report = ProgressReporter(ctx)
+
+        def on_progress(sent: int, total: int) -> None:
+            report(sent, total, f"Uploaded {sent:,} of {total:,} bytes")
+
+        result = await anyio.to_thread.run_sync(
+            functools.partial(upload_one, client, spec, on_progress)
+        )
         result["notes"] = UPLOAD_NOTES
         return result
 
-    @mcp.tool(annotations=WRITE)
-    def youtube_upload_videos(
-        videos: list[dict[str, Any]], stop_on_error: bool = False
+    @mcp.tool(title="Upload videos in bulk", annotations=WRITE)
+    async def youtube_upload_videos(
+        ctx: Context, videos: list[dict[str, Any]], stop_on_error: bool = False
     ) -> dict[str, Any]:
         """Bulk-upload videos one after another. Each item takes the same keys as
         youtube_upload_video: {"source", "title", "description", "tags", "category_id",
@@ -149,22 +167,33 @@ def register(mcp, client: YouTubeClient) -> None:
 
         Failures are reported per item and don't stop the batch unless stop_on_error=true.
         A quota error stops the batch, since every later upload would fail too.
+        Sends a progress notification after each video (videos done / total).
         """
-        results: list[dict[str, Any]] = []
-        for index, spec in enumerate(videos):
-            try:
-                results.append({"index": index, "ok": True, **upload_one(client, spec)})
-            except (YouTubeAPIError, ValueError, RuntimeError, OSError) as e:
-                results.append(
-                    {"index": index, "ok": False, "source": spec.get("source"), "error": str(e)}
-                )
-                quota = isinstance(e, YouTubeAPIError) and e.reason in {
-                    "quotaExceeded",
-                    "uploadLimitExceeded",
-                    "dailyLimitExceeded",
-                }
-                if stop_on_error or quota:
-                    break
+        report = ProgressReporter(ctx)
+
+        def run_batch() -> list[dict[str, Any]]:
+            results: list[dict[str, Any]] = []
+            for index, spec in enumerate(videos):
+                try:
+                    results.append({"index": index, "ok": True, **upload_one(client, spec)})
+                    outcome = "uploaded"
+                except (YouTubeAPIError, ValueError, RuntimeError, OSError) as e:
+                    results.append(
+                        {"index": index, "ok": False, "source": spec.get("source"), "error": str(e)}
+                    )
+                    outcome = "failed"
+                    quota = isinstance(e, YouTubeAPIError) and e.reason in {
+                        "quotaExceeded",
+                        "uploadLimitExceeded",
+                        "dailyLimitExceeded",
+                    }
+                    if stop_on_error or quota:
+                        report(index + 1, len(videos), f"Video {index + 1} {outcome}; stopping")
+                        break
+                report(index + 1, len(videos), f"Video {index + 1} of {len(videos)} {outcome}")
+            return results
+
+        results = await anyio.to_thread.run_sync(run_batch)
         uploaded = [r for r in results if r["ok"]]
         return {
             "requested": len(videos),
@@ -176,7 +205,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "notes": UPLOAD_NOTES,
         }
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Check upload processing status", annotations=READ)
     def youtube_get_upload_status(video_ids: list[str]) -> dict[str, Any]:
         """Check processing for uploaded videos: uploadStatus (uploaded/processed/rejected/failed),
         failure or rejection reason, privacy, processing progress and YouTube's suggestions."""

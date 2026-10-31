@@ -1,8 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import re
+from pathlib import Path
 
+from youtube_studio_mcp import __version__
 from youtube_studio_mcp.client import clean_params
+
+ROOT = Path(__file__).resolve().parents[1]
 
 LEGACY_TOOLS = {
     "youtube_auth_status",
@@ -50,3 +56,14 @@ def test_delete_requires_confirm(call):
         assert "confirm=true" in str(e)
     else:
         raise AssertionError("delete without confirm should fail")
+
+
+def test_version_is_in_sync():
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'^version = "([^"]+)"', pyproject, re.MULTILINE)
+    assert match and match.group(1) == __version__
+    server = json.loads((ROOT / "server.json").read_text(encoding="utf-8"))
+    assert server["version"] == __version__
+    assert all(p["version"] == __version__ for p in server["packages"])
+    plugin = json.loads((ROOT / ".codex-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    assert plugin["version"] == __version__

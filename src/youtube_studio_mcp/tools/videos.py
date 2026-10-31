@@ -24,7 +24,7 @@ def uploads_playlist_id(client: YouTubeClient) -> str:
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List your videos", annotations=READ)
     def youtube_list_videos(max_results: int = 10, page_token: str | None = None) -> dict[str, Any]:
         """List your channel's uploads, newest first, with metadata, status and statistics.
         Includes private, unlisted and scheduled videos."""
@@ -59,7 +59,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "pageInfo": playlist.get("pageInfo", {}),
         }
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Get a video", annotations=READ)
     def youtube_get_video(video_id: str, part: str = VIDEO_PARTS) -> dict[str, Any]:
         """Get one video. For your own videos you can add fileDetails, processingDetails,
         suggestions, recordingDetails, localizations, paidProductPlacementDetails to `part`."""
@@ -68,7 +68,7 @@ def register(mcp, client: YouTubeClient) -> None:
             raise RuntimeError(f"Video {video_id} not found.")
         return items[0]
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Fetch videos by ID or chart", annotations=READ)
     def youtube_videos_list(
         id: list[str] | None = None,
         chart: str | None = None,
@@ -102,14 +102,14 @@ def register(mcp, client: YouTubeClient) -> None:
             ),
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Get stats for many videos", annotations=READ)
     def youtube_batch_get_video_stats(
         video_ids: list[str], part: str | None = None
     ) -> dict[str, Any]:
         """Get statistics for many videos at once (videos:batchGetStats, own 10,000/day bucket)."""
         return client.request("GET", "videos:batchGetStats", params={"id": video_ids, "part": part})
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update video details", annotations=WRITE)
     def youtube_update_video(
         video_id: str,
         title: str | None = None,
@@ -178,7 +178,7 @@ def register(mcp, client: YouTubeClient) -> None:
             op="videos.update",
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update a video resource", annotations=WRITE)
     def youtube_update_video_resource(
         video: dict[str, Any], part: str | None = None
     ) -> dict[str, Any]:
@@ -193,23 +193,23 @@ def register(mcp, client: YouTubeClient) -> None:
             op="videos.update",
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a video", annotations=DESTRUCTIVE)
     def youtube_delete_video(video_id: str, confirm: bool = False) -> dict[str, Any]:
         """Permanently delete one of your videos. Requires confirm=true."""
         require_confirm(confirm, "Deleting a video")
         return client.request("DELETE", "videos", params={"id": video_id}, op="videos.delete")
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Rate a video", annotations=WRITE)
     def youtube_rate_video(video_id: str, rating: str) -> dict[str, Any]:
         """Like, dislike or clear your rating on a video. rating: like | dislike | none."""
         return client.request("POST", "videos/rate", params={"id": video_id, "rating": rating})
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Get your video ratings", annotations=READ)
     def youtube_get_video_rating(video_ids: list[str]) -> dict[str, Any]:
         """Get your rating (like/dislike/none) for up to 50 videos."""
         return client.request("GET", "videos/getRating", params={"id": video_ids})
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Report a video for abuse", annotations=WRITE)
     def youtube_report_video_abuse(
         video_id: str,
         reason_id: str,
@@ -229,12 +229,12 @@ def register(mcp, client: YouTubeClient) -> None:
             "POST", "videos/reportAbuse", json_body={k: v for k, v in body.items() if v is not None}
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Get video AI-training permissions", annotations=READ)
     def youtube_get_video_trainability(video_id: str) -> dict[str, Any]:
         """Show which third parties a video's owner allows to train AI models on it."""
         return client.request("GET", "videoTrainability", params={"id": video_id})
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Upload a video thumbnail", annotations=WRITE)
     def youtube_upload_thumbnail(video_id: str, image: str) -> dict[str, Any]:
         """Set a custom thumbnail from a local image path or URL (JPEG/PNG, max 50 MB,
         1280x720 recommended). The channel must be verified for custom thumbnails."""
@@ -247,7 +247,7 @@ def register(mcp, client: YouTubeClient) -> None:
                 op="thumbnails.set",
             )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List video categories", annotations=READ)
     def youtube_list_video_categories(
         region_code: str = "US", hl: str | None = None
     ) -> dict[str, Any]:
@@ -258,19 +258,19 @@ def register(mcp, client: YouTubeClient) -> None:
             params={"part": "snippet", "regionCode": region_code, "hl": hl},
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List video abuse reasons", annotations=READ)
     def youtube_list_video_abuse_reasons(hl: str | None = None) -> dict[str, Any]:
         """List the reasons accepted by youtube_report_video_abuse."""
         return client.request(
             "GET", "videoAbuseReportReasons", params={"part": "snippet", "hl": hl}
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List supported languages", annotations=READ)
     def youtube_list_languages(hl: str | None = None) -> dict[str, Any]:
         """List the interface languages YouTube supports (i18nLanguages)."""
         return client.request("GET", "i18nLanguages", params={"part": "snippet", "hl": hl})
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List supported regions", annotations=READ)
     def youtube_list_regions(hl: str | None = None) -> dict[str, Any]:
         """List the content regions YouTube supports (i18nRegions)."""
         return client.request("GET", "i18nRegions", params={"part": "snippet", "hl": hl})

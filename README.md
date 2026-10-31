@@ -74,7 +74,8 @@ Other agents that support skills load the same `skills/youtube-studio-mcp` folde
 ### Safety
 
 - Uploads are **private** unless you set `privacy_status`. Scheduled uploads stay private until their time.
-- Deletes need `confirm=true`, and every tool carries MCP read-only/destructive hints.
+- Deletes need `confirm=true`, and every tool carries a title and MCP read-only/destructive hints.
+- `YOUTUBE_READ_ONLY=true` hides every tool that can change the channel; `YOUTUBE_TOOL_GROUPS` exposes only the groups you need.
 - Every write and upload is recorded in an append-only audit log (`logs/audit.jsonl`).
 - Dry-run (`YOUTUBE_DRY_RUN=true` or `youtube_set_dry_run`) logs writes without sending them.
 - `YOUTUBE_UPLOAD_DIR` limits local uploads to one folder. Video bytes are never passed as tool arguments.
@@ -182,7 +183,9 @@ call `youtube_channel_overview`.
 | `YOUTUBE_AUDIT_LOG` | no | Audit log path (default `logs/audit.jsonl`) |
 | `YOUTUBE_UPLOAD_CHUNK_MB` | no | Upload chunk size |
 | `YOUTUBE_PAGE_SIZE`, `YOUTUBE_TIMEOUT`, `YOUTUBE_LOG_LEVEL` | no | List page size, request timeout and log level |
-| `YOUTUBE_TRANSPORT`, `YOUTUBE_HOST`, `YOUTUBE_PORT` | no | `stdio` (default), `sse` or `streamable-http`, and its bind address |
+| `YOUTUBE_TOOL_GROUPS` | no | Comma-separated tool groups to register (default all): `channels`, `videos`, `uploads`, `playlists`, `comments`, `captions`, `search`, `live`, `analytics`, `raw`. Auth, server, audit and dry-run tools are always on |
+| `YOUTUBE_READ_ONLY` | no | `true` registers only read-only tools |
+| `YOUTUBE_TRANSPORT`, `YOUTUBE_HOST`, `YOUTUBE_PORT` | no | `stdio` (default), `streamable-http` (recommended for HTTP) or `sse` (deprecated by the MCP spec; logs a warning), and its bind address (default `127.0.0.1:8000`) |
 
 ## Example prompts
 

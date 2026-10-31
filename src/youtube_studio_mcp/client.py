@@ -10,6 +10,7 @@ import json
 import random
 import re
 import time
+from collections.abc import Callable
 from contextlib import AbstractContextManager
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,9 @@ MAX_ATTEMPTS = 5
 QUOTA_REASONS = {"quotaExceeded", "dailyLimitExceeded", "uploadLimitExceeded", "rateLimitExceeded"}
 
 logger = get_logger("client")
+
+# Called with (bytes the server has confirmed, total bytes) during an upload.
+UploadProgress = Callable[[int, int], None]
 
 
 class YouTubeAPIError(Exception):
@@ -219,12 +223,13 @@ class YouTubeClient:
         params: dict[str, Any] | None = None,
         metadata: Any | None = None,
         op: str | None = None,
+        on_progress: UploadProgress | None = None,
     ) -> Any:
         """Upload a local file with the resumable protocol and return the API response.
 
         The file is streamed in `config.upload_chunk_size` pieces, never loaded
         whole, and interrupted chunks are resumed from the byte the server
-        last confirmed.
+        last confirmed. `on_progress(sent, total)` is called after every chunk.
         """
         method = method.upper()
         url = f"{UPLOAD_BASE}/{path.lstrip('/')}"
@@ -255,7 +260,7 @@ class YouTubeClient:
 
         try:
             session_url = self._start_session(method, url, query, metadata, mime_type, size)
-            payload = self._send_chunks(session_url, file_path, size)
+            payload = self._send_chunks(session_url, file_path, size, on_progress)
         except YouTubeAPIError as e:
             self.audit.record(
                 op=op,
@@ -298,7 +303,13 @@ class YouTubeClient:
             raise YouTubeAPIError(resp.status_code, self._payload(resp))
         return location
 
-    def _send_chunks(self, session_url: str, file_path: Path, size: int) -> Any:
+    def _send_chunks(
+        self,
+        session_url: str,
+        file_path: Path,
+        size: int,
+        on_progress: UploadProgress | None = None,
+    ) -> Any:
         chunk = self.config.upload_chunk_size
         offset = 0
         failures = 0
@@ -318,10 +329,14 @@ class YouTubeClient:
                     resp = None
                     logger.warning("upload chunk at %d failed: %s", offset, e)
                 if resp is not None and resp.status_code in (200, 201):
+                    if on_progress:
+                        on_progress(size, size)
                     return self._payload(resp)
                 if resp is not None and resp.status_code == 308:
                     offset = _next_offset(resp)
                     failures = 0
+                    if on_progress:
+                        on_progress(offset, size)
                     continue
                 if resp is not None and resp.status_code not in RETRYABLE_STATUSES:
                     raise YouTubeAPIError(resp.status_code, self._payload(resp))

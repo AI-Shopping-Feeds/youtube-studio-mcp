@@ -6,12 +6,12 @@
     "url": "https://github.com/AI-Shopping-Feeds/youtube-studio-mcp",
     "source": "github"
   },
-  "version": "0.2.0",
+  "version": "0.3.0",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "youtube-studio-mcp-server",
-      "version": "0.2.0",
+      "version": "0.3.0",
       "transport": {
         "type": "stdio"
       },
@@ -40,6 +40,21 @@
         {
           "name": "YOUTUBE_DRY_RUN",
           "description": "When 'true', writes and uploads are logged but not sent.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "default": "false"
+        },
+        {
+          "name": "YOUTUBE_TOOL_GROUPS",
+          "description": "Optional comma-separated tool groups to register (channels, videos, uploads, playlists, comments, captions, search, live, analytics, raw). Empty means all.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "YOUTUBE_READ_ONLY",
+          "description": "When 'true', only read-only tools are registered.",
           "isRequired": false,
           "format": "string",
           "isSecret": false,

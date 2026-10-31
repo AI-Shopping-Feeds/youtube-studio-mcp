@@ -17,8 +17,8 @@ from .audit import AuditLog
 from .auth import SCOPES, OAuthUserAuth
 from .client import YouTubeAPIError, YouTubeClient
 from .config import Config, load_config
-from .tools import MODULES
-from .tools._common import READ
+from .tools import select_modules
+from .tools._common import LOCAL_READ, LOCAL_WRITE
 
 logger = get_logger("server")
 
@@ -61,9 +61,18 @@ def _as_tool_error(fn):
 
 
 class YouTubeMCPServer(MCPServer):
-    """MCPServer whose tools report expected errors to the client."""
+    """MCPServer whose tools report expected errors to the client.
+
+    With `read_only` set, tools not annotated read_only_hint=True are skipped
+    instead of registered (YOUTUBE_READ_ONLY).
+    """
+
+    read_only: bool = False
 
     def tool(self, *args: Any, **kwargs: Any):
+        annotations = kwargs.get("annotations")
+        if self.read_only and not (annotations and annotations.read_only_hint):
+            return lambda fn: fn
         register = super().tool(*args, **kwargs)
         return lambda fn: register(_as_tool_error(fn))
 
@@ -77,6 +86,8 @@ YouTube Analytics API v2 and YouTube Reporting API v1.
   each); most writes cost 50 units of the 10,000/day main bucket.
 - Deletes need confirm=true. Every write is audit-logged; set dry-run with youtube_set_dry_run.
 - Use youtube_call_api for any method without a dedicated tool.
+- The tool list can be limited with YOUTUBE_TOOL_GROUPS and YOUTUBE_READ_ONLY=true; the
+  auth, server, audit and dry-run tools are always available.
 """
 
 
@@ -87,20 +98,23 @@ def build_server(
     if config is None:
         config = load_config(env_file=env_file)
 
+    modules = select_modules(config.tool_groups)
     if auth is None:
         auth = OAuthUserAuth(config.token_file, config.client_secrets)
     audit = AuditLog(config.audit_log)
     client = YouTubeClient(config, auth, audit)
     logger.info(
-        "starting youtube-studio-mcp %s token=%s dry_run=%s",
+        "starting youtube-studio-mcp %s token=%s dry_run=%s groups=%s read_only=%s",
         __version__,
         config.token_file,
         config.dry_run,
+        ",".join(config.tool_groups) or "all",
+        config.read_only,
     )
 
-    mcp = YouTubeMCPServer("youtube-studio-mcp", instructions=INSTRUCTIONS)
+    mcp = YouTubeMCPServer("youtube-studio-mcp", version=__version__, instructions=INSTRUCTIONS)
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Check sign-in status", annotations=LOCAL_READ)
     def youtube_auth_status() -> dict[str, Any]:
         """Show whether OAuth credentials exist, which scopes were granted and how to sign in."""
         status = auth.status()
@@ -112,7 +126,7 @@ def build_server(
             )
         return status
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Describe the server", annotations=LOCAL_READ)
     def youtube_describe_server() -> dict[str, Any]:
         """Show the server version, config, dry-run state and audit log location."""
         return {
@@ -124,27 +138,31 @@ def build_server(
             "upload_chunk_bytes": config.upload_chunk_size,
             "timeout": config.timeout,
             "transport": config.transport,
+            "tool_groups": list(config.tool_groups) or "all",
+            "read_only": config.read_only,
         }
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Show recent audit log entries", annotations=LOCAL_READ)
     def youtube_audit_tail(limit: int = 20) -> dict[str, Any]:
         """Show the most recent write operations from the audit log."""
         entries = audit.tail(limit)
         return {"count": len(entries), "entries": entries}
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Look up an audit log entry", annotations=LOCAL_READ)
     def youtube_audit_lookup(audit_id: str) -> dict[str, Any]:
         """Look up one audit log entry by ID."""
         entry = audit.find(audit_id)
         return {"found": entry is not None, "audit_id": audit_id, "entry": entry}
 
-    @mcp.tool()
+    @mcp.tool(title="Turn dry-run on or off", annotations=LOCAL_WRITE)
     def youtube_set_dry_run(enabled: bool) -> dict[str, Any]:
         """Turn dry-run on or off for this session. In dry-run, writes and uploads are logged
         to the audit log but not sent to YouTube."""
         config.dry_run = enabled
         return {"dry_run": enabled}
 
-    for module in MODULES:
+    # The tools above are always registered; the filters apply to the YouTube tools.
+    mcp.read_only = config.read_only
+    for module in modules:
         module.register(mcp, client)
     return mcp

@@ -17,6 +17,12 @@ def _path(raw: str) -> Path:
     return Path(raw).expanduser().resolve()
 
 
+def _groups(raw: str | None) -> tuple[str, ...]:
+    """Parse a comma-separated YOUTUBE_TOOL_GROUPS value (order kept, duplicates dropped)."""
+    names = (part.strip().lower() for part in (raw or "").split(","))
+    return tuple(dict.fromkeys(name for name in names if name))
+
+
 @dataclass
 class Config:
     client_secrets: Path
@@ -31,6 +37,8 @@ class Config:
     transport: str = "stdio"
     host: str = "127.0.0.1"
     port: int = 8000
+    tool_groups: tuple[str, ...] = ()  # empty = every group
+    read_only: bool = False
 
 
 def load_config(env_file: Path | None = None) -> Config:
@@ -57,6 +65,11 @@ def load_config(env_file: Path | None = None) -> Config:
             f"YOUTUBE_TRANSPORT must be stdio, sse or streamable-http, got '{transport}'."
         )
 
+    tool_groups = _groups(os.environ.get("YOUTUBE_TOOL_GROUPS"))
+    from .tools import select_modules  # deferred: the tool modules import this module
+
+    select_modules(tool_groups)  # fail at startup on an unknown group
+
     audit = _path(os.environ.get("YOUTUBE_AUDIT_LOG", "logs/audit.jsonl"))
     audit.parent.mkdir(parents=True, exist_ok=True)
 
@@ -77,4 +90,6 @@ def load_config(env_file: Path | None = None) -> Config:
         transport=transport,
         host=os.environ.get("YOUTUBE_HOST", "127.0.0.1"),
         port=int(_number("YOUTUBE_PORT", "8000", int)),
+        tool_groups=tool_groups,
+        read_only=_truthy(os.environ.get("YOUTUBE_READ_ONLY")),
     )

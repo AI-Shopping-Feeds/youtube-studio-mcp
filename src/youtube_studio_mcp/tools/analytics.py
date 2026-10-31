@@ -19,7 +19,7 @@ def register(mcp, client: YouTubeClient) -> None:
     def query(**params: Any) -> dict[str, Any]:
         return client.request("GET", "reports", api="analytics", params=params)
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Get channel analytics", annotations=READ)
     def youtube_channel_analytics(start_date: str, end_date: str) -> dict[str, Any]:
         """Channel totals for a date range (YYYY-MM-DD): views, watch time, retention,
         engagement and subscribers."""
@@ -27,7 +27,7 @@ def register(mcp, client: YouTubeClient) -> None:
             ids="channel==MINE", startDate=start_date, endDate=end_date, metrics=DEFAULT_METRICS
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Get video analytics", annotations=READ)
     def youtube_video_analytics(video_id: str, start_date: str, end_date: str) -> dict[str, Any]:
         """Daily analytics for one video over a date range (YYYY-MM-DD)."""
         return query(
@@ -40,7 +40,7 @@ def register(mcp, client: YouTubeClient) -> None:
             sort="day",
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Run an analytics query", annotations=READ)
     def youtube_analytics_query(
         start_date: str,
         end_date: str,
@@ -75,7 +75,7 @@ def register(mcp, client: YouTubeClient) -> None:
             includeHistoricalChannelData=include_historical_channel_data,
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List analytics groups", annotations=READ)
     def youtube_list_analytics_groups(
         id: list[str] | None = None, page_token: str | None = None
     ) -> dict[str, Any]:
@@ -87,7 +87,7 @@ def register(mcp, client: YouTubeClient) -> None:
             params={"mine": None if id else True, "id": id, "pageToken": page_token},
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Create an analytics group", annotations=WRITE)
     def youtube_create_analytics_group(
         title: str, item_type: str = "youtube#video"
     ) -> dict[str, Any]:
@@ -96,7 +96,7 @@ def register(mcp, client: YouTubeClient) -> None:
         body = {"snippet": {"title": title}, "contentDetails": {"itemType": item_type}}
         return client.request("POST", "groups", api="analytics", json_body=body)
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Rename an analytics group", annotations=WRITE)
     def youtube_rename_analytics_group(group_id: str, title: str) -> dict[str, Any]:
         """Rename an Analytics group."""
         return client.request(
@@ -106,18 +106,18 @@ def register(mcp, client: YouTubeClient) -> None:
             json_body={"id": group_id, "snippet": {"title": title}},
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete an analytics group", annotations=DESTRUCTIVE)
     def youtube_delete_analytics_group(group_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete an Analytics group. Requires confirm=true."""
         require_confirm(confirm, "Deleting an Analytics group")
         return client.request("DELETE", "groups", api="analytics", params={"id": group_id})
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List analytics group items", annotations=READ)
     def youtube_list_analytics_group_items(group_id: str) -> dict[str, Any]:
         """List the items in an Analytics group."""
         return client.request("GET", "groupItems", api="analytics", params={"groupId": group_id})
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Add items to an analytics group", annotations=WRITE)
     def youtube_add_analytics_group_items(
         group_id: str, resource_ids: list[str], kind: str = "youtube#video"
     ) -> dict[str, Any]:
@@ -133,7 +133,7 @@ def register(mcp, client: YouTubeClient) -> None:
         ]
         return {"added": len(added), "items": added}
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Remove an analytics group item", annotations=DESTRUCTIVE)
     def youtube_remove_analytics_group_item(
         group_item_id: str, confirm: bool = False
     ) -> dict[str, Any]:
@@ -143,7 +143,7 @@ def register(mcp, client: YouTubeClient) -> None:
 
     # ---- Reporting API (scheduled bulk CSV reports) ----
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List report types", annotations=READ)
     def youtube_list_report_types(include_system_managed: bool | None = None) -> dict[str, Any]:
         """List bulk report types you can schedule with the Reporting API (e.g. channel_basic_a2)."""
         return client.request(
@@ -153,14 +153,14 @@ def register(mcp, client: YouTubeClient) -> None:
             params={"includeSystemManaged": include_system_managed},
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List reporting jobs", annotations=READ)
     def youtube_list_reporting_jobs(include_system_managed: bool | None = None) -> dict[str, Any]:
         """List your scheduled Reporting API jobs."""
         return client.request(
             "GET", "jobs", api="reporting", params={"includeSystemManaged": include_system_managed}
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Create a reporting job", annotations=WRITE)
     def youtube_create_reporting_job(report_type_id: str, name: str) -> dict[str, Any]:
         """Schedule a daily bulk report. The first reports appear within about 48 hours."""
         return client.request(
@@ -170,13 +170,13 @@ def register(mcp, client: YouTubeClient) -> None:
             json_body={"reportTypeId": report_type_id, "name": name},
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a reporting job", annotations=DESTRUCTIVE)
     def youtube_delete_reporting_job(job_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete a reporting job. Requires confirm=true."""
         require_confirm(confirm, "Deleting a reporting job")
         return client.request("DELETE", f"jobs/{job_id}", api="reporting")
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List generated reports", annotations=READ)
     def youtube_list_reports(
         job_id: str,
         created_after: str | None = None,
@@ -197,7 +197,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Download a report", annotations=READ)
     def youtube_download_report(download_url: str, save_to: str | None = None) -> dict[str, Any]:
         """Download a Reporting API report (CSV) by its downloadUrl. save_to writes it to a
         local file; otherwise the CSV text is returned (truncated if very large)."""
