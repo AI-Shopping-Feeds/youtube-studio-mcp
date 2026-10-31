@@ -4,9 +4,9 @@ from typing import Any
 
 from mcp.types import ToolAnnotations
 
-READ = ToolAnnotations(readOnlyHint=True, openWorldHint=True)
-WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True)
-DESTRUCTIVE = ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True)
+READ = ToolAnnotations(read_only_hint=True, open_world_hint=True)
+WRITE = ToolAnnotations(read_only_hint=False, destructive_hint=False, open_world_hint=True)
+DESTRUCTIVE = ToolAnnotations(read_only_hint=False, destructive_hint=True, open_world_hint=True)
 
 
 def require_confirm(confirm: bool, what: str) -> None:
