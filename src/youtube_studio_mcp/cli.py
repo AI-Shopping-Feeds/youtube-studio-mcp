@@ -15,7 +15,15 @@ import click
 
 from . import __version__
 from .auth import OPTIONAL_SCOPES, SCOPES
-from .config import load_config
+from .config import Config, load_config
+
+
+def _load(ctx: click.Context) -> Config:
+    """load_config, with configuration errors shown as a clean CLI error."""
+    try:
+        return load_config(env_file=ctx.obj.get("env_file"))
+    except RuntimeError as e:
+        raise click.ClickException(str(e)) from e
 
 
 @click.group(invoke_without_command=True)
@@ -54,7 +62,7 @@ def run(ctx: click.Context) -> None:
     """Start the MCP server (default)."""
     from .server import build_server
 
-    config = load_config(env_file=ctx.obj.get("env_file"))
+    config = _load(ctx)
     config.transport = ctx.obj.get("transport") or config.transport
     config.host = ctx.obj.get("host") or config.host
     config.port = ctx.obj.get("port") or config.port
@@ -120,7 +128,7 @@ def tools(ctx: click.Context) -> None:
     """List every tool the server exposes."""
     from .server import build_server
 
-    mcp = build_server(config=load_config(env_file=ctx.obj.get("env_file")))
+    mcp = build_server(config=_load(ctx))
     for tool in sorted(asyncio.run(mcp.list_tools()), key=lambda t: t.name):
         click.echo(f"{tool.name}: {(tool.description or '').splitlines()[0]}")
 
