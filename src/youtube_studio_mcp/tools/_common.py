@@ -7,6 +7,11 @@ from mcp.types import ToolAnnotations
 READ = ToolAnnotations(read_only_hint=True, open_world_hint=True)
 WRITE = ToolAnnotations(read_only_hint=False, destructive_hint=False, open_world_hint=True)
 DESTRUCTIVE = ToolAnnotations(read_only_hint=False, destructive_hint=True, open_world_hint=True)
+# Server-local tools (auth status, audit log, dry-run) never call YouTube.
+LOCAL_READ = ToolAnnotations(read_only_hint=True, open_world_hint=False)
+LOCAL_WRITE = ToolAnnotations(
+    read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False
+)
 
 
 def require_confirm(confirm: bool, what: str) -> None:

@@ -89,11 +89,12 @@ def register(mcp, client: YouTubeClient) -> None:
             params={"id": broadcast_id, "part": "id,contentDetails", "streamId": stream_id},
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(annotations=DESTRUCTIVE)
     def youtube_transition_live_broadcast(
         broadcast_id: str, broadcast_status: str
     ) -> dict[str, Any]:
-        """Change a broadcast's state. broadcast_status: testing | live | complete."""
+        """Change a broadcast's state. broadcast_status: testing | live | complete.
+        "complete" ends the broadcast for good; it can't be restarted."""
         return client.request(
             "POST",
             "liveBroadcasts/transition",
@@ -222,9 +223,10 @@ def register(mcp, client: YouTubeClient) -> None:
         require_confirm(confirm, "Deleting a chat message")
         return client.request("DELETE", "liveChat/messages", params={"id": message_id})
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(annotations=DESTRUCTIVE)
     def youtube_close_live_chat_poll(poll_id: str) -> dict[str, Any]:
-        """Close a live chat poll (liveChatMessages.transition, status=closed)."""
+        """Close a live chat poll (liveChatMessages.transition, status=closed). A closed poll
+        can't be reopened."""
         return client.request(
             "POST", "liveChat/messages/transition", params={"id": poll_id, "status": "closed"}
         )
