@@ -10,7 +10,7 @@ from ._common import DESTRUCTIVE, READ, WRITE, merge, parts_of, require_confirm
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Get channel overview", annotations=READ)
     def youtube_channel_overview() -> dict[str, Any]:
         """Get the authenticated channel: profile, branding, statistics and uploads playlist ID."""
         return client.request(
@@ -22,7 +22,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List channels", annotations=READ)
     def youtube_list_channels(
         part: str = "snippet,statistics,contentDetails",
         mine: bool | None = None,
@@ -54,7 +54,7 @@ def register(mcp, client: YouTubeClient) -> None:
             ),
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update a channel", annotations=WRITE)
     def youtube_update_channel(channel: dict[str, Any], part: str | None = None) -> dict[str, Any]:
         """Update a channel resource (channels.update). `channel` must include `id`.
 
@@ -66,7 +66,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "PUT", "channels", params={"part": part or parts_of(channel)}, json_body=channel
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Upload a channel banner", annotations=WRITE)
     def youtube_upload_channel_banner(
         source: str, apply_to_channel_id: str | None = None
     ) -> dict[str, Any]:
@@ -93,7 +93,7 @@ def register(mcp, client: YouTubeClient) -> None:
             )
         return result
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Set the channel watermark", annotations=WRITE)
     def youtube_set_watermark(
         channel_id: str,
         source: str,
@@ -121,14 +121,14 @@ def register(mcp, client: YouTubeClient) -> None:
                 },
             )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Remove the channel watermark", annotations=DESTRUCTIVE)
     def youtube_unset_watermark(channel_id: str) -> dict[str, Any]:
         """Remove the channel's video watermark."""
         return client.request("POST", "watermarks/unset", params={"channelId": channel_id})
 
     # ---- channel sections ----
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List channel sections", annotations=READ)
     def youtube_list_channel_sections(
         part: str = "snippet,contentDetails",
         mine: bool | None = True,
@@ -149,7 +149,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Create a channel section", annotations=WRITE)
     def youtube_create_channel_section(section: dict[str, Any]) -> dict[str, Any]:
         """Add a channel section. Example: {"snippet": {"type": "multiplePlaylists",
         "title": "Ads", "position": 1}, "contentDetails": {"playlists": ["PL..."]}}."""
@@ -157,14 +157,14 @@ def register(mcp, client: YouTubeClient) -> None:
             "POST", "channelSections", params={"part": parts_of(section)}, json_body=section
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update a channel section", annotations=WRITE)
     def youtube_update_channel_section(section: dict[str, Any]) -> dict[str, Any]:
         """Update a channel section. `section` must include `id`."""
         return client.request(
             "PUT", "channelSections", params={"part": parts_of(section)}, json_body=section
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a channel section", annotations=DESTRUCTIVE)
     def youtube_delete_channel_section(section_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete a channel section. Requires confirm=true."""
         require_confirm(confirm, "Deleting a channel section")
@@ -172,7 +172,7 @@ def register(mcp, client: YouTubeClient) -> None:
 
     # ---- activities & subscriptions ----
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List channel activity", annotations=READ)
     def youtube_list_activities(
         mine: bool | None = True,
         channel_id: str | None = None,
@@ -198,7 +198,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List subscriptions", annotations=READ)
     def youtube_list_subscriptions(
         mine: bool | None = True,
         my_subscribers: bool | None = None,
@@ -226,13 +226,13 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Subscribe to a channel", annotations=WRITE)
     def youtube_subscribe(channel_id: str) -> dict[str, Any]:
         """Subscribe the authenticated channel to another channel."""
         body = {"snippet": {"resourceId": {"kind": "youtube#channel", "channelId": channel_id}}}
         return client.request("POST", "subscriptions", params={"part": "snippet"}, json_body=body)
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Unsubscribe from a channel", annotations=DESTRUCTIVE)
     def youtube_unsubscribe(subscription_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete a subscription (use the subscription ID, not the channel ID). Requires confirm."""
         require_confirm(confirm, "Unsubscribing")

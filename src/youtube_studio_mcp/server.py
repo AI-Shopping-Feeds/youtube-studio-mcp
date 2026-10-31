@@ -100,7 +100,7 @@ def build_server(
 
     mcp = YouTubeMCPServer("youtube-studio-mcp", version=__version__, instructions=INSTRUCTIONS)
 
-    @mcp.tool(annotations=LOCAL_READ)
+    @mcp.tool(title="Check sign-in status", annotations=LOCAL_READ)
     def youtube_auth_status() -> dict[str, Any]:
         """Show whether OAuth credentials exist, which scopes were granted and how to sign in."""
         status = auth.status()
@@ -112,7 +112,7 @@ def build_server(
             )
         return status
 
-    @mcp.tool(annotations=LOCAL_READ)
+    @mcp.tool(title="Describe the server", annotations=LOCAL_READ)
     def youtube_describe_server() -> dict[str, Any]:
         """Show the server version, config, dry-run state and audit log location."""
         return {
@@ -126,19 +126,19 @@ def build_server(
             "transport": config.transport,
         }
 
-    @mcp.tool(annotations=LOCAL_READ)
+    @mcp.tool(title="Show recent audit log entries", annotations=LOCAL_READ)
     def youtube_audit_tail(limit: int = 20) -> dict[str, Any]:
         """Show the most recent write operations from the audit log."""
         entries = audit.tail(limit)
         return {"count": len(entries), "entries": entries}
 
-    @mcp.tool(annotations=LOCAL_READ)
+    @mcp.tool(title="Look up an audit log entry", annotations=LOCAL_READ)
     def youtube_audit_lookup(audit_id: str) -> dict[str, Any]:
         """Look up one audit log entry by ID."""
         entry = audit.find(audit_id)
         return {"found": entry is not None, "audit_id": audit_id, "entry": entry}
 
-    @mcp.tool(annotations=LOCAL_WRITE)
+    @mcp.tool(title="Turn dry-run on or off", annotations=LOCAL_WRITE)
     def youtube_set_dry_run(enabled: bool) -> dict[str, Any]:
         """Turn dry-run on or off for this session. In dry-run, writes and uploads are logged
         to the audit log but not sent to YouTube."""

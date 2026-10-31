@@ -101,7 +101,7 @@ def upload_one(client: YouTubeClient, spec: dict[str, Any]) -> dict[str, Any]:
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Upload a video", annotations=WRITE)
     def youtube_upload_video(
         source: str,
         title: str,
@@ -137,7 +137,7 @@ def register(mcp, client: YouTubeClient) -> None:
         result["notes"] = UPLOAD_NOTES
         return result
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Upload videos in bulk", annotations=WRITE)
     def youtube_upload_videos(
         videos: list[dict[str, Any]], stop_on_error: bool = False
     ) -> dict[str, Any]:
@@ -176,7 +176,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "notes": UPLOAD_NOTES,
         }
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Check upload processing status", annotations=READ)
     def youtube_get_upload_status(video_ids: list[str]) -> dict[str, Any]:
         """Check processing for uploaded videos: uploadStatus (uploaded/processed/rejected/failed),
         failure or rejection reason, privacy, processing progress and YouTube's suggestions."""

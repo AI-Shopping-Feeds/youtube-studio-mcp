@@ -9,7 +9,7 @@ from ._common import DESTRUCTIVE, READ, WRITE, merge, parts_of, require_confirm
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Search YouTube", annotations=READ)
     def youtube_search(
         q: str | None = None,
         type: str = "video",
@@ -60,7 +60,7 @@ def register(mcp, client: YouTubeClient) -> None:
             ),
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List channel members", annotations=READ)
     def youtube_list_members(
         mode: str = "all_current",
         has_access_to_level: str | None = None,
@@ -83,12 +83,12 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List membership levels", annotations=READ)
     def youtube_list_membership_levels() -> dict[str, Any]:
         """List the channel's membership levels (needs the memberships scope)."""
         return client.request("GET", "membershipsLevels", params={"part": "id,snippet"})
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List Super Chat events", annotations=READ)
     def youtube_list_super_chat_events(
         hl: str | None = None, max_results: int = 50, page_token: str | None = None
     ) -> dict[str, Any]:
@@ -104,7 +104,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List third-party links", annotations=READ)
     def youtube_list_third_party_links(
         type: str | None = None,
         linking_token: str | None = None,
@@ -123,7 +123,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Create or update a third-party link", annotations=WRITE)
     def youtube_upsert_third_party_link(
         link: dict[str, Any], update: bool = False
     ) -> dict[str, Any]:
@@ -136,7 +136,7 @@ def register(mcp, client: YouTubeClient) -> None:
             json_body=link,
         )
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a third-party link", annotations=DESTRUCTIVE)
     def youtube_delete_third_party_link(
         linking_token: str, type: str, confirm: bool = False
     ) -> dict[str, Any]:
@@ -146,7 +146,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "DELETE", "thirdPartyLinks", params={"linkingToken": linking_token, "type": type}
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="File an abuse report", annotations=WRITE)
     def youtube_report_abuse(report: dict[str, Any]) -> dict[str, Any]:
         """File an abuse report against any YouTube entity (abuseReports.insert). Body:
         {"snippet": {"subject": {"id": "...", "type": "..."}, "abuseTypes": [...],

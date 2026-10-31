@@ -9,7 +9,7 @@ from ._common import DESTRUCTIVE, require_confirm
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Call any YouTube API method", annotations=DESTRUCTIVE)
     def youtube_call_api(
         http_method: str,
         path: str,

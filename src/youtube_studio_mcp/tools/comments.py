@@ -9,7 +9,7 @@ from ._common import DESTRUCTIVE, READ, WRITE, require_confirm
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List comments", annotations=READ)
     def youtube_list_comments(
         video_id: str | None = None,
         all_threads_related_to_channel_id: str | None = None,
@@ -43,7 +43,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List comment replies", annotations=READ)
     def youtube_list_comment_replies(
         parent_id: str, max_results: int = 20, page_token: str | None = None
     ) -> dict[str, Any]:
@@ -60,7 +60,7 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Post a comment", annotations=WRITE)
     def youtube_post_comment(video_id: str, text: str) -> dict[str, Any]:
         """Post a top-level comment on a video as the authenticated channel."""
         body = {
@@ -74,7 +74,7 @@ def register(mcp, client: YouTubeClient) -> None:
             op="commentThreads.insert",
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Reply to a comment", annotations=WRITE)
     def youtube_reply_to_comment(parent_id: str, text: str) -> dict[str, Any]:
         """Reply to a top-level comment."""
         body = {"snippet": {"parentId": parent_id, "textOriginal": text}}
@@ -82,13 +82,13 @@ def register(mcp, client: YouTubeClient) -> None:
             "POST", "comments", params={"part": "snippet"}, json_body=body, op="comments.insert"
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Edit a comment", annotations=WRITE)
     def youtube_update_comment(comment_id: str, text: str) -> dict[str, Any]:
         """Edit the text of one of your comments."""
         body = {"id": comment_id, "snippet": {"textOriginal": text}}
         return client.request("PUT", "comments", params={"part": "snippet"}, json_body=body)
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Moderate comments", annotations=WRITE)
     def youtube_set_comment_moderation_status(
         comment_ids: list[str], moderation_status: str, ban_author: bool = False
     ) -> dict[str, Any]:
@@ -104,12 +104,12 @@ def register(mcp, client: YouTubeClient) -> None:
             },
         )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Mark comments as spam", annotations=WRITE)
     def youtube_mark_comments_as_spam(comment_ids: list[str]) -> dict[str, Any]:
         """Flag comments as spam."""
         return client.request("POST", "comments/markAsSpam", params={"id": comment_ids})
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a comment", annotations=DESTRUCTIVE)
     def youtube_delete_comment(comment_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete one of your comments. Requires confirm=true."""
         require_confirm(confirm, "Deleting a comment")

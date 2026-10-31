@@ -13,12 +13,12 @@ MAX_INLINE_CHARS = 100_000
 
 
 def register(mcp, client: YouTubeClient) -> None:
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="List caption tracks", annotations=READ)
     def youtube_list_captions(video_id: str) -> dict[str, Any]:
         """List a video's caption tracks (language, name, kind, draft status). 50 quota units."""
         return client.request("GET", "captions", params={"part": "snippet", "videoId": video_id})
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Upload a caption track", annotations=WRITE)
     def youtube_upload_caption(
         video_id: str,
         source: str,
@@ -50,7 +50,7 @@ def register(mcp, client: YouTubeClient) -> None:
                 op="captions.insert",
             )
 
-    @mcp.tool(annotations=WRITE)
+    @mcp.tool(title="Update a caption track", annotations=WRITE)
     def youtube_update_caption(
         caption_id: str,
         is_draft: bool | None = None,
@@ -74,7 +74,7 @@ def register(mcp, client: YouTubeClient) -> None:
                 op="captions.update",
             )
 
-    @mcp.tool(annotations=READ)
+    @mcp.tool(title="Download a caption track", annotations=READ)
     def youtube_download_caption(
         caption_id: str,
         tfmt: str | None = "srt",
@@ -97,7 +97,7 @@ def register(mcp, client: YouTubeClient) -> None:
             "text": text[:MAX_INLINE_CHARS],
         }
 
-    @mcp.tool(annotations=DESTRUCTIVE)
+    @mcp.tool(title="Delete a caption track", annotations=DESTRUCTIVE)
     def youtube_delete_caption(caption_id: str, confirm: bool = False) -> dict[str, Any]:
         """Delete a caption track. Requires confirm=true."""
         require_confirm(confirm, "Deleting a caption track")
